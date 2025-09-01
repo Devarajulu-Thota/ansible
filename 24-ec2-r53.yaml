@@ -8,6 +8,7 @@
     - frontend
     subnet_id: subnet-0ed42fb1575a7d66b
     sg_id: sg-05238a74d61bf3665
+    zone: devaraj.site
   tasks:
   - name: create ec2
     amazon.aws.ec2_instance:
@@ -24,3 +25,15 @@
   - name: print ec2_output
     ansible.builtin.debug:
       msg: "{{ ec2_output }}"
+
+  - name: create r53 records
+    amazon.aws.route53:
+      state: present
+      zone: "{{ zone }}"
+      record: "{{ item.item }}.{{ zone }}"
+      type: A
+      ttl: 1
+      value: "{{ item.instances[0].private_ip_address }}"
+      wait: true
+      overwrite: true
+    loop: "{{ ec2_output.results }}"
